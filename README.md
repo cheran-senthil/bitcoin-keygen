@@ -8,4 +8,4 @@ Bitcoin Keygen can generate compressed versions or generate for the testnet, by 
 
 ## License
 
-[GNU General Public License v3.0](LICENSE)
+[GNU General Public License v3.0](LICENSE) © Cheran Senthilkumar
