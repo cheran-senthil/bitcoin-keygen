@@ -63,6 +63,11 @@ class Base58Check:
         # drop checksum
         return byte_str[:2], byte_str[2:-8]
 
+    @classmethod
+    def checksum_check(cls, base58_str):
+        """check if a Base58Check string is valid"""
+        return cls.encode(*cls.decode(base58_str)) == base58_str
+
 
 def is_private_valid(private_key):
     """check if a given private key is valid"""
