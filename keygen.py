@@ -27,13 +27,15 @@ def is_private_valid(private_key):
 
 def Base58Check_encoding(version, payload):
     """creates a Base58Check string from a version byte and payload"""
-    code_str = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
+    code_str = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 
     # concatenate the version and payload
     ext_key = version + payload
 
     # take the checksum of the extended key
-    checksum = hashlib.sha256(hashlib.sha256(binascii.unhexlify(ext_key)).digest()).hexdigest()[:8]
+    checksum = hashlib.sha256(
+        hashlib.sha256(binascii.unhexlify(ext_key)).digest()
+    ).hexdigest()[:8]
 
     # concatenate the external key and checksum
     ext_key += checksum
@@ -46,17 +48,19 @@ def Base58Check_encoding(version, payload):
         out_str.append(code_str[rem])
 
     # represent leading zero bytes by '1'
-    leading_ones = '1' * ((len(ext_key) - len(ext_key.lstrip('0'))) // 2)
+    leading_ones = "1" * ((len(ext_key) - len(ext_key.lstrip("0"))) // 2)
 
     # concatenate the 1's with the external key in base-58
-    return leading_ones + ''.join(reversed(out_str))
+    return leading_ones + "".join(reversed(out_str))
 
 
 def private2WIF(private_key, compressed=False, mainnet=True):
     """returns the Wallet Import Format (WIF) associated with a private key (hex string)"""
     if not is_private_valid(private_key):
         raise ValueError("{} is not a valid key".format(private_key))
-    return Base58Check_encoding('80' if mainnet else 'ef', private_key + ('01' if compressed else ''))
+    return Base58Check_encoding(
+        "80" if mainnet else "ef", private_key + ("01" if compressed else "")
+    )
 
 
 def private2public(private_key, compressed=False):
@@ -65,8 +69,10 @@ def private2public(private_key, compressed=False):
         raise ValueError("{} is not a valid key".format(private_key))
 
     # base point (generator)
-    G = (0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798,
-         0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8)
+    G = (
+        0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798,
+        0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8,
+    )
 
     # field prime
     P = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F
@@ -95,15 +101,15 @@ def private2public(private_key, compressed=False):
 
     px, py = p
     if compressed:
-        return ('03' if py & 1 else '02') + hex(px)[2:]
-    return '04' + hex(px)[2:] + hex(py)[2:]
+        return ("03" if py & 1 else "02") + hex(px)[2:]
+    return "04" + hex(px)[2:] + hex(py)[2:]
 
 
 def public2address(public_key, mainnet=True):
     """returns the address associated with a public key"""
-    ripemd160 = hashlib.new('ripemd160')
+    ripemd160 = hashlib.new("ripemd160")
     ripemd160.update(hashlib.sha256(binascii.unhexlify(public_key)).digest())
-    return Base58Check_encoding('00' if mainnet else '6f', ripemd160.hexdigest())
+    return Base58Check_encoding("00" if mainnet else "6f", ripemd160.hexdigest())
 
 
 def private2address(private_key, compressed=False, mainnet=True):
