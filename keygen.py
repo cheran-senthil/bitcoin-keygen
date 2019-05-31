@@ -19,48 +19,55 @@ import binascii
 import hashlib
 
 
+class Base58Check:
+    code_str = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+    inv_code_str = dict(zip(code_str, range(58)))
+
+    @classmethod
+    def encode(cls, version, payload):
+        """creates a Base58Check string from a version byte and payload"""
+        # concatenate the version and payload
+        ext_key = version + payload
+
+        # take the checksum of the extended key
+        checksum = hashlib.sha256(hashlib.sha256(binascii.unhexlify(ext_key)).digest()).hexdigest()[:8]
+
+        # concatenate the external key and checksum
+        ext_key += checksum
+
+        # convert the external key to base-58
+        x = int(ext_key, 16)
+        out_str = []
+        while x > 0:
+            x, rem = divmod(x, 58)
+            out_str.append(cls.code_str[rem])
+
+        # represent leading zero bytes by '1'
+        leading_ones = "1" * ((len(ext_key) - len(ext_key.lstrip("0"))) // 2)
+
+        # concatenate the 1's with the external key in base-58
+        return leading_ones + "".join(reversed(out_str))
+
+    @classmethod
+    def decode(cls, base58_str):
+        """decodes a Base58Check string to a version byte and payload"""
+        # strip leading 1's
+        out_str = base58_str.lstrip("1")[::-1]
+
+        # construct byte string
+        x = sum(cls.inv_code_str[char] * pow(58, i) for i, char in enumerate(out_str))
+        byte_str = hex(x)[2:]
+        leading_zeroes = "00" * (len(base58_str) - len(out_str)) + "0" * (len(byte_str) & 1)
+        byte_str = leading_zeroes + byte_str
+
+        # drop checksum
+        return byte_str[:2], byte_str[2:-8]
+
+
 def is_private_valid(private_key):
     """check if a given private key is valid"""
     N = (1 << 256) - 0x14551231950B75FC4402DA1732FC9BEBF  # order
     return 0 < int(private_key, 16) < N
-
-
-def Base58Check_encoding(version, payload):
-    """creates a Base58Check string from a version byte and payload"""
-    code_str = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
-
-    # concatenate the version and payload
-    ext_key = version + payload
-
-    # take the checksum of the extended key
-    checksum = hashlib.sha256(
-        hashlib.sha256(binascii.unhexlify(ext_key)).digest()
-    ).hexdigest()[:8]
-
-    # concatenate the external key and checksum
-    ext_key += checksum
-
-    # convert the external key to base-58
-    x = int(ext_key, 16)
-    out_str = []
-    while x > 0:
-        x, rem = divmod(x, 58)
-        out_str.append(code_str[rem])
-
-    # represent leading zero bytes by '1'
-    leading_ones = "1" * ((len(ext_key) - len(ext_key.lstrip("0"))) // 2)
-
-    # concatenate the 1's with the external key in base-58
-    return leading_ones + "".join(reversed(out_str))
-
-
-def private2WIF(private_key, compressed=False, mainnet=True):
-    """returns the Wallet Import Format (WIF) associated with a private key (hex string)"""
-    if not is_private_valid(private_key):
-        raise ValueError("{} is not a valid key".format(private_key))
-    return Base58Check_encoding(
-        "80" if mainnet else "ef", private_key + ("01" if compressed else "")
-    )
 
 
 def private2public(private_key, compressed=False):
@@ -109,7 +116,7 @@ def public2address(public_key, mainnet=True):
     """returns the address associated with a public key"""
     ripemd160 = hashlib.new("ripemd160")
     ripemd160.update(hashlib.sha256(binascii.unhexlify(public_key)).digest())
-    return Base58Check_encoding("00" if mainnet else "6f", ripemd160.hexdigest())
+    return Base58Check.encode("00" if mainnet else "6f", ripemd160.hexdigest())
 
 
 def private2address(private_key, compressed=False, mainnet=True):
@@ -117,3 +124,16 @@ def private2address(private_key, compressed=False, mainnet=True):
     if not is_private_valid(private_key):
         raise ValueError("{} is not a valid key".format(private_key))
     return public2address(private2public(private_key, compressed), mainnet)
+
+
+def private2WIF(private_key, compressed=False, mainnet=True):
+    """returns the Wallet Import Format (WIF) associated with a private key (hex string)"""
+    if not is_private_valid(private_key):
+        raise ValueError("{} is not a valid key".format(private_key))
+    return Base58Check.encode("80" if mainnet else "ef", private_key + ("01" * compressed))
+
+
+def WIF2private(wif, compressed=False):
+    """returns the private key associated with a Wallet Import Format (WIF)"""
+    _, private_key = Base58Check.decode(wif)
+    return private_key[:-2] if compressed else private_key
