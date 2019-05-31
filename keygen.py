@@ -110,4 +110,4 @@ def private2address(private_key, compressed=False, mainnet=True):
     """returns the address associated with a private key"""
     if not is_private_valid(private_key):
         raise ValueError("{} is not a valid key".format(private_key))
-    public2address(private2public(private_key, compressed), mainnet)
+    return public2address(private2public(private_key, compressed), mainnet)
