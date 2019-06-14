@@ -67,8 +67,8 @@ def private2public(private_key, compressed=False):
 
     px, py = p
     if compressed:
-        return ("03" if py & 1 else "02") + hex(px)[2:]
-    return "04" + hex(px)[2:] + hex(py)[2:]
+        return ("03" if py & 1 else "02") + ("%064x" % px)
+    return "04" + ("%064x" % px) + ("%064x" % py)
 
 
 def public2address(public_key, mainnet=True):

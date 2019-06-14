@@ -24,7 +24,7 @@ with open(path.join(here, "README.md"), encoding="utf-8") as f:
 
 setup(
     name="bitcoin-keygen",
-    version="v0.1.0",
+    version="v0.1.1",
     description="Bitcoin Utility Functions",
     long_description=long_description,
     long_description_content_type="text/markdown",
