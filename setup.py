@@ -30,7 +30,7 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/cheran-senthil/bitcoin-keygen",
     author="Cheran",
-    aurthor_email="cheran.v.senthil@gmail.com",
+    author_email="cheran.v.senthil@gmail.com",
     classifiers=[
         "Development Status :: 4 - Beta",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
